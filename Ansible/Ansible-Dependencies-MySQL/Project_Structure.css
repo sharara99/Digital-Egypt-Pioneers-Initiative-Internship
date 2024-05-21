@@ -1,0 +1,24 @@
+Ansible-Dependencies-MySQL/
+├── roles/
+│   ├── installation/
+│   │   ├── tasks/
+│   │   │   └── main.yml
+│   │   ├── vars/
+│   │   │   └── main.yml
+│   │   └── (other directories/files for installation role)
+│   ├── mysql/
+│   │   ├── tasks/
+│   │   │   └── main.yml
+│   │   ├── vars/
+│   │   │   └── main.yml
+│   │   └── (other directories/files for MySQL role)
+│   └── (other roles if any)
+├── playbook.yml
+└── inventory.txt
+├──Project_Structure.css
+└──README.md
+
+
+
+
+

@@ -1,0 +1,9 @@
+---
+- name: Deployment of a Web Application
+  hosts: target2
+  roles:
+    - installation
+    - mysql
+
+
+

@@ -1,0 +1,31 @@
+---
+# tasks file for installation
+- name: Install all required dependencies
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - python
+    - python-setuptools
+    - python-dev
+    - build-essential
+    - python3-pip
+
+- name: Install MySQL database
+  apt:
+    name: "{{ item }}"
+    state: present
+  loop:
+    - mysql-server
+    - mysql-client
+
+- name: Start MySQL Service
+  service:
+    name: mysql
+    state: started
+    enabled: yes
+
+- name: Install MySQL module for Python
+  pip:
+    name: pymysql # Use pymysql as an example, choose the appropriate module based on your Python version and requirements
+    state: present
