@@ -1,9 +1,6 @@
 ---
 - name: Deployment of a Web Application
-  hosts: target2
+  hosts: all 
   roles:
     - installation
     - mysql
-
-
-

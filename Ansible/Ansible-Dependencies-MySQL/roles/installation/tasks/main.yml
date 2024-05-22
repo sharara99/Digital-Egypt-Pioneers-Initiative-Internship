@@ -1,5 +1,4 @@
 ---
-# tasks file for installation
 - name: Install all required dependencies
   apt:
     name: "{{ item }}"
