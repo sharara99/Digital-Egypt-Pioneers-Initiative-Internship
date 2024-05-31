@@ -1,5 +1,5 @@
-# This is Ahmed Sami Docker Application & i just appling it for learning 
-# Simple web app for  Docker Deep Dive book
+#This is Ahmed Sami Docker's application from #Docker and Kubernetes | This box contains two fingers
+#I just apply it to learn# Simple web app for  Docker Deep Dive book
 
 Exposes web server on port `8080` as per `./app.js`
 
