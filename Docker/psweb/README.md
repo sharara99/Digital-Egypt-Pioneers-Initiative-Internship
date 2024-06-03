@@ -1,4 +1,5 @@
-# This is Ahmed Sami Docker Application & i just appling it for learning 
+# This is Ahmed Sami Docker's application from #Docker and Kubernetes | العلبة دي فيها سوعبان
+# I just apply it for learn
 # Simple web app for  Docker Deep Dive book
 
 Exposes web server on port `8080` as per `./app.js`
