@@ -1,0 +1,117 @@
+---
+- name: Ensure Docker is installed on all hosts
+  hosts: all
+  become: yes
+  tasks:
+    - name: Check if Docker is already installed
+      command: docker --version
+      register: docker_installed
+      ignore_errors: yes
+
+    - name: Update the apt package index
+      apt:
+        update_cache: yes
+      when: docker_installed.failed
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+      when: docker_installed.failed
+
+    - name: Add Docker’s official GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      when: docker_installed.failed
+
+    - name: Set up the Docker stable repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+        state: present
+      when: docker_installed.failed
+
+    - name: Update the apt package index again
+      apt:
+        update_cache: yes
+      when: docker_installed.failed
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+      when: docker_installed.failed
+
+- name: Add vm3 user to the docker group
+  hosts: vm3
+  become: yes
+  tasks:
+    - name: Add vm3 user to the docker group
+      ansible.builtin.command: sudo usermod -aG docker vm3
+
+- name: Start Docker on all hosts 
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure Docker service is started
+      ansible.builtin.service:
+        name: docker
+        state: started
+
+- name: Start Docker on VM3
+  hosts: vm3
+  become: yes
+  tasks:
+    - name: Ensure Docker service is started
+      ansible.builtin.service:
+        name: docker
+        state: started
+
+- name: Copy directory contents from VM1 to VM3
+  hosts: vm1
+  tasks:
+    - name: Ensure destination directory exists on VM3
+      ansible.builtin.shell: mkdir -p /home/vm3/depi/docker/java-application
+      delegate_to: vm3
+      become: yes
+      become_user: vm3
+
+    - name: Copy directory contents from VM1 to VM3
+      ansible.builtin.command: >
+        rsync -avz --progress /home/vm1/depi/docker/java-application/
+        vm3@192.168.1.13:/home/vm3/depi/docker/java-application/
+      become: yes
+      become_user: vm1
+      register: rsync_output
+      ignore_errors: yes
+
+    - name: Display rsync output for diagnostics
+      debug:
+        var: rsync_output.stdout_lines
+
+- name: Build Docker image on VM3
+  hosts: vm3
+  become: yes
+  tasks:
+    - name: Ensure Dockerfile exists
+      stat:
+        path: /home/vm3/depi/docker/java-application/Dockerfile
+      register: dockerfile_stat
+
+    - name: Build Docker image
+      ansible.builtin.command: docker build -t consumer /home/vm3/depi/docker/java-application/
+      args:
+        chdir: /home/vm3/depi/docker/java-application
+      when: dockerfile_stat.stat.exists
+
+    - name: Display Docker build output
+      debug:
+        var: docker_build_output.stdout_lines
+      when: dockerfile_stat.stat.exists
+
+    - name: Run Docker container
+      ansible.builtin.command: docker run -d --name sharara -v /home/vm3/depi/docker/java-application:/app consumer
