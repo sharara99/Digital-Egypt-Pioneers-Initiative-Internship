@@ -71,6 +71,7 @@
         name: docker
         state: started
 
+#adding another way to copy compressed file from host to host
 - name: Compress directory on VM1
   hosts: vm1
   become: yes
