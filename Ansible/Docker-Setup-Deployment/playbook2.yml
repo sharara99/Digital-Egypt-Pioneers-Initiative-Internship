@@ -1,0 +1,140 @@
+- name: Ensure Docker is installed on all hosts
+  hosts: all
+  become: yes
+  tasks:
+    - name: Check if Docker is already installed
+      command: docker --version
+      register: docker_installed
+      ignore_errors: yes
+
+    - name: Update the apt package index
+      apt:
+        update_cache: yes
+      when: docker_installed.failed
+
+    - name: Install required packages
+      apt:
+        name:
+          - apt-transport-https
+          - ca-certificates
+          - curl
+          - software-properties-common
+        state: present
+      when: docker_installed.failed
+
+    - name: Add Docker’s official GPG key
+      apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        state: present
+      when: docker_installed.failed
+
+    - name: Set up the Docker stable repository
+      apt_repository:
+        repo: deb [arch=amd64] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable
+        state: present
+      when: docker_installed.failed
+
+    - name: Update the apt package index again
+      apt:
+        update_cache: yes
+      when: docker_installed.failed
+
+    - name: Install Docker
+      apt:
+        name: docker-ce
+        state: present
+      when: docker_installed.failed
+
+    - name: Reboot if Docker was installed
+      reboot:
+        msg: "Rebooting after Docker installation"
+      when: docker_installed.failed
+
+- name: Add vm2 user to the docker group
+  hosts: vm2
+  become: yes
+  tasks:
+    - name: Add vm2 user to the docker group
+      ansible.builtin.command: sudo usermod -aG docker vm2
+
+    - name: Reboot if user was added to Docker group
+      reboot:
+        msg: "Rebooting after adding vm2 to Docker group"
+      when: "ansible_facts['user_groups']['vm2'] is not defined or 'docker' not in ansible_facts['user_groups']['vm2']"
+
+- name: Ensure Docker is started on all hosts
+  hosts: all
+  become: yes
+  tasks:
+    - name: Ensure Docker service is started
+      ansible.builtin.service:
+        name: docker
+        state: started
+
+- name: Compress directory on VM1
+  hosts: vm1
+  become: yes
+  tasks:
+    - name: Ensure destination directory exists on VM2
+      ansible.builtin.shell: mkdir -p /home/vm2/depi/docker/java-application
+      delegate_to: vm2
+      become: yes
+      become_user: vm2
+
+    - name: Compress directory
+      ansible.builtin.archive:
+        path: /home/vm1/depi/docker/java-application/
+        dest: /home/vm1/depi/docker/java-application.tar.gz
+        format: gz
+
+    - name: Copy compressed directory to VM2
+      ansible.builtin.copy:
+        src: /home/vm1/depi/docker/java-application.tar.gz
+        dest: /home/vm2/depi/docker/java-application.tar.gz
+      delegate_to: vm2
+
+    - name: Extract directory on VM2
+      ansible.builtin.unarchive:
+        src: /home/vm2/depi/docker/java-application.tar.gz
+        dest: /home/vm2/depi/docker/java-application/
+        remote_src: yes
+      delegate_to: vm2
+      become: yes
+      become_user: vm2
+
+    - name: Remove compressed file on VM1
+      ansible.builtin.file:
+        path: /home/vm1/depi/docker/java-application.tar.gz
+        state: absent
+
+    - name: Remove compressed file on VM2
+      ansible.builtin.file:
+        path: /home/vm2/depi/docker/java-application.tar.gz
+        state: absent
+      delegate_to: vm2
+      become: yes
+      become_user: vm2
+
+- name: Build Docker image on VM2
+  hosts: vm2
+  become: yes
+  tasks:
+    - name: Ensure Dockerfile exists
+      stat:
+        path: /home/vm2/depi/docker/java-application/Dockerfile
+      register: dockerfile_stat
+
+    - name: Build Docker image
+      ansible.builtin.command: docker build -t consumer /home/vm2/depi/docker/java-application/
+      args:
+        chdir: /home/vm2/depi/docker/java-application
+      when: dockerfile_stat.stat.exists
+      register: docker_build_output
+
+    - name: Display Docker build output
+      debug:
+        var: docker_build_output.stdout_lines
+      when: dockerfile_stat.stat.exists
+
+    - name: Run Docker container
+      ansible.builtin.command: docker run -d --name sharara -v /home/vm2/depi/docker/java-application:/app consumer
