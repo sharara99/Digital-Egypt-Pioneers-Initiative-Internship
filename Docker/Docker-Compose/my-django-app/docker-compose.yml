@@ -1,0 +1,20 @@
+version: '3'
+
+services:
+  web:
+    build: ./app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+    volumes:
+      - ./app:/app
+    environment:
+      - DEBUG=1
+      - DATABASE_URL=postgres://vm1:1234@db/my_django_app
+  db:
+    image: postgres:12
+    environment:
+      POSTGRES_DB: my_django_app
+      POSTGRES_USER: vm1
+      POSTGRES_PASSWORD: 1234
