@@ -1,0 +1,8 @@
+my-web-app/
+├── app/
+│   ├── Dockerfile
+│   ├── requirements.txt
+│   └── app.py
+├── db/
+│   └── init.sql
+└── docker-compose.yml
