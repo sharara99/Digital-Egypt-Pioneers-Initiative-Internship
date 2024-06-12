@@ -1,0 +1,7 @@
+my-django-app/
+├── app/
+│   ├── Dockerfile
+│   └── requirements.txt
+├── db/
+│   └── init.sql
+└── docker-compose.yml
