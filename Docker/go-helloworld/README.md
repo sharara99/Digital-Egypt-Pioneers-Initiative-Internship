@@ -9,6 +9,7 @@ go run main.go
 Access the application on: http://127.0.0.1:6111/
 
 Step 1. Get the Dockerfile ready
+
 Step 2. Deploy to Kubernetes:
 # Shortcut method to run the application with headless pods
 kubectl run test --image pixelpotato/go-helloworld:v1.0.0
