@@ -1,0 +1,61 @@
+version: '3.1'
+
+services:
+
+  mongo:
+    image: mongo
+    restart: always
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: root1
+      MONGO_INITDB_ROOT_PASSWORD: root1
+    ports:
+      - 27017:27017
+    volumes:
+      - mongodb:/data/db
+    networks:
+      - backend
+
+  mongo-express:
+    image: mongo-express
+    restart: always
+    ports:
+      - 8081:8081
+    environment:
+      ME_CONFIG_MONGODB_ADMINUSERNAME: root2
+      ME_CONFIG_MONGODB_ADMINPASSWORD: root2
+      ME_CONFIG_MONGODB_URL: mongodb://root1:root1@mongo:27017/
+      ME_CONFIG_BASICAUTH: "false"
+    networks:
+      - backend
+      - frontend
+    depends_on:
+      - mongo
+
+  nginx-web:
+    image: nginx
+    volumes:
+      - ./default.conf:/etc/nginx/conf.d/default.conf
+    ports:
+      - "80:80"
+    networks:
+      - frontend
+    restart: always
+    environment:
+      - NGINX_HOST=foobar.com
+      - NGINX_PORT=80
+
+networks:
+  backend:
+    ipam:
+      driver: default
+      config:
+        - subnet: 10.10.0.0/16
+      
+  frontend:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 10.20.0.0/16
+      
+volumes:
+  mongodb:
