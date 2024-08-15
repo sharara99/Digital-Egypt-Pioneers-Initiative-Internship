@@ -15,8 +15,3 @@ The Digital Egypt Pioneers Initiative is a prestigious program aimed at developi
 - Develop skills in monitoring, logging, and troubleshooting.
 
 Thank you for visiting my repository!
-
-
-
-
-
